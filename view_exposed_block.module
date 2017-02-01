@@ -4,92 +4,92 @@
  * Implements hook_menu().
  */
 function view_exposed_block_menu() {
-	$items['admin/config/view-exposed-block'] = array(
-		'title' => 'View Exposed Block settings',
-		'page callback' => 'drupal_get_form',
-		'page arguments' => array('view_exposed_block_admin_form'),
-		// TODO: separate permission?
-		'access arguments' => array('administer content'),
-		'type' => MENU_NORMAL_ITEM,
-		'file' => 'view_exposed_block.admin.inc',
-	);
-	return $items;
+  $items['admin/config/view-exposed-block'] = array(
+    'title' => 'View Exposed Block settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('view_exposed_block_admin_form'),
+    // TODO: separate permission?
+    'access arguments' => array('administer content'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'view_exposed_block.admin.inc',
+  );
+  return $items;
 }
 
 /*
  * Implements hook_block_info().
  */
 function view_exposed_block_block_info() {
-	$blocks = array();
-	// Loop through settings array.
-	$view_exposed_block_blocks = variable_get('view_exposed_block_blocks', array());
-	foreach ($view_exposed_block_blocks as $block_machine_name => $block_data) {
-		$block_info = _view_exposed_block_build_info($block_data);
-		$blocks[$block_machine_name] = array(
-			'info' => t($block_info),
-			// TODO: caching?
-			'cache' => DRUPAL_NO_CACHE,
-		);
-	}
-	return $blocks;
+  $blocks = array();
+  // Loop through settings array.
+  $view_exposed_block_blocks = variable_get('view_exposed_block_blocks', array());
+  foreach ($view_exposed_block_blocks as $block_machine_name => $block_data) {
+    $block_info = _view_exposed_block_build_info($block_data);
+    $blocks[$block_machine_name] = array(
+      'info' => t($block_info),
+      // TODO: caching?
+      'cache' => DRUPAL_NO_CACHE,
+    );
+  }
+  return $blocks;
 }
 
 /**
  * Builds block data based on setting.
  */
 function _view_exposed_block_build_info($setting) {
-	list($view_name, $view_display, $exposed_filter) = explode('|', $setting);
-	if ($view = views_get_view($view_name)) {
-		$view_title = $view->human_name;
-		if (isset($view->display[$view_display])) {
-			$display_title = $view->display[$view_display]->display_title;
-			return "View Exposed Block: $view_title - $display_title - $exposed_filter";
-		}
-	}
+  list($view_name, $view_display, $exposed_filter) = explode('|', $setting);
+  if ($view = views_get_view($view_name)) {
+    $view_title = $view->human_name;
+    if (isset($view->display[$view_display])) {
+      $display_title = $view->display[$view_display]->display_title;
+      return "View Exposed Block: $view_title - $display_title - $exposed_filter";
+    }
+  }
 }
 
 /*
  * Implements hook_block_view().
  */
 function view_exposed_block_block_view($delta = '') {
-	$block = array();
-	$view_exposed_block_blocks = variable_get('view_exposed_block_blocks', array());
-	if (isset($view_exposed_block_blocks[$delta])) {
-		$block['subject'] = "<none>";
-		list($view_name, $view_display, $exposed_filter) = explode('|', $view_exposed_block_blocks[$delta]);
-		// TODO: different behavior depends on exposed filter type. Right now fulltext search works only.
-		// TODO: ...and furthermore this module intends that you use fulltext search only.
-		$form = _view_exposed_block_get_view_exposed_fulltext($view_name, $view_display, $exposed_filter);
-		$block['content'] = drupal_render($form);
-	}
-	return $block;
+  $block = array();
+  $view_exposed_block_blocks = variable_get('view_exposed_block_blocks', array());
+  if (isset($view_exposed_block_blocks[$delta])) {
+    $block['subject'] = "<none>";
+    list($view_name, $view_display, $exposed_filter) = explode('|', $view_exposed_block_blocks[$delta]);
+    // TODO: different behavior depends on exposed filter type. Right now fulltext search works only.
+    // TODO: ...and furthermore this module intends that you use fulltext search only.
+    $form = _view_exposed_block_get_view_exposed_fulltext($view_name, $view_display, $exposed_filter);
+    $block['content'] = drupal_render($form);
+  }
+  return $block;
 }
 
 /*
  * Returns view exposed form's fulltext search input.
  */
 function _view_exposed_block_get_view_exposed_fulltext($view_name, $view_display, $exposed_filter = "search_api_views_fulltext") {
-	// Load view.
-	$view = views_get_view($view_name);
-	$view->set_display($view_display);
-	$view->init_handlers();
-	// Prepare $form_state to render form.
-	$exposed_form_state = array(
-		'view' => &$view,
-		'display' => &$view->display[$view_display],
-		'exposed_form_plugin' => $view->display_handler->get_plugin('exposed_form'),
-		'method' => 'get',
-		'rerender' => TRUE,
-		'no_redirect' => TRUE,
-		'always_process' => TRUE,
-	);
-	$form = drupal_build_form('views_exposed_form', $exposed_form_state);
-	// Seems like JS is really buggy so we have to change input id to have it properly works.
-	$id = &drupal_static(__FUNCTION__);
-	if (!isset($id)) {
-		$id = 2;
-	}
-	$form[$exposed_filter]['#id'] .= "-". $id."nd";
-	$id++;
-	return $form;
+  // Load view.
+  $view = views_get_view($view_name);
+  $view->set_display($view_display);
+  $view->init_handlers();
+  // Prepare $form_state to render form.
+  $exposed_form_state = array(
+    'view' => &$view,
+    'display' => &$view->display[$view_display],
+    'exposed_form_plugin' => $view->display_handler->get_plugin('exposed_form'),
+    'method' => 'get',
+    'rerender' => TRUE,
+    'no_redirect' => TRUE,
+    'always_process' => TRUE,
+  );
+  $form = drupal_build_form('views_exposed_form', $exposed_form_state);
+  // Seems like JS is really buggy so we have to change input id to have it properly works.
+  $id = &drupal_static(__FUNCTION__);
+  if (!isset($id)) {
+    $id = 2;
+  }
+  $form[$exposed_filter]['#id'] .= "-" . $id . "nd";
+  $id++;
+  return $form;
 }
